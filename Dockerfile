@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Copiar pom.xml y descargar dependencias (cache)
 COPY pom.xml .
-RUN mvn -q dependency:go-offline
+RUN mvn -q dependency:resolve
 
 # Copiar el código fuente
 COPY src ./src
