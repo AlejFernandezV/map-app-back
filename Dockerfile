@@ -3,32 +3,38 @@
 # ============================
 FROM maven:3.9-eclipse-temurin-17 AS build
 
-# Crear carpeta de trabajo
 WORKDIR /app
 
-# Copiar pom.xml y descargar dependencias (cache)
 COPY pom.xml .
 RUN mvn -q dependency:resolve
 
-# Copiar el código fuente
 COPY src ./src
 
-# Construir el JAR
 RUN mvn -q clean package -DskipTests
 
 
 # ============================
-# 2) FINAL STAGE
+# 2) FINAL STAGE (RUNTIME)
 # ============================
 FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
+# 🔐 Crear carpeta para certificados
+RUN mkdir /certs
+
+# 🔐 Copiar el keystore al contenedor
+COPY keystore.p12 /certs/keystore.p12
+
+# 📦 Copiar el JAR
 COPY --from=build /app/target/*.jar app.jar
 
-EXPOSE 8080
+# 🌐 Exponer puerto HTTPS
+EXPOSE 8443
 
-# Variables de entorno
+# Variables de entorno (ejemplo)
 ENV DB_PORT=3306
+ENV SSL_KEYSTORE_PASSWORD=123456
 
+# 🚀 Arrancar Spring Boot
 ENTRYPOINT ["java", "-jar", "app.jar"]
